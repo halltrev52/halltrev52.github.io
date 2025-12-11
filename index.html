@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X.M.A.S — Extraterrestrial Munitions Activation Server</title>
+
+<style>
+/* ----------------------------
+   BODY & BASIC STYLING
+-----------------------------*/
+body {
+    background: #000;
+    color: #0f0;
+    font-family: "Courier New", monospace;
+    text-align: center;
+    padding: 20px;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ----------------------------
+   CRT SCANLINE & COLOR EFFECT
+-----------------------------*/
+.crt {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 2px,
+        rgba(0, 0, 0, 0.07) 3px
+    );
+    animation: crt-flicker 4s infinite;
+    mix-blend-mode: overlay;
+}
+@keyframes crt-flicker {
+    0% { opacity: 0.15; }
+    45% { opacity: 0.22; }
+    46% { opacity: 0.05; }
+    47% { opacity: 0.22; }
+    100% { opacity: 0.18; }
+}
+.crt::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        radial-gradient(circle, rgba(255,0,0,0.07), transparent 60%),
+        radial-gradient(circle, rgba(0,255,0,0.07), transparent 60%),
+        radial-gradient(circle, rgba(0,0,255,0.07), transparent 60%);
+    mix-blend-mode: screen;
+    animation: crt-colorWarp 7s infinite alternate ease-in-out;
+}
+@keyframes crt-colorWarp { from { transform: translateX(-2px); } to { transform: translateX(2px); } }
+
+/* ----------------------------
+   PAGE ELEMENTS
+-----------------------------*/
+h1 { font-size: clamp(32px, 7vw, 58px); margin-bottom:5px; text-shadow:0 0 10px #0f0,0 0 40px red; }
+h2 { font-size: clamp(12px,3vw,20px); margin-top:0; margin-bottom:20px; color:#0f0; opacity:0.8; }
+
+#timer, #codeBoxes, #status, #timerLabel, #inputLabel { opacity:0; transition:opacity 1s ease-in; }
+
+#timerLabel { font-size: clamp(16px,4vw,26px); margin-top:20px; margin-bottom:5px; text-shadow:0 0 10px red; }
+#timer { font-size: clamp(32px,9vw,60px); margin:10px 0 20px; padding:10px 20px; display:inline-block; border:2px solid #0f0; width:clamp(260px,70%,420px); text-shadow:0 0 15px #0f0; background: rgba(0,0,0,0.4); }
+
+.flash { animation: flash 1s infinite; }
+@keyframes flash { 0%{color:red;text-shadow:0 0 25px red}50%{color:black;text-shadow:none}100%{color:red;text-shadow:0 0 25px red} }
+
+#inputLabel { margin-top:30px; font-size: clamp(14px,4vw,22px); text-shadow:0 0 10px #0f0; }
+
+#codeBoxes { display:flex; justify-content:center; flex-wrap:wrap; gap:4px; max-width:600px; margin:15px auto 25px; }
+.charBox { width: clamp(18px,6vw,28px); height: clamp(30px,7vw,40px); background:black; border:2px solid #0f0; color:#0f0; font-size: clamp(14px,4vw,22px); text-align:center; }
+
+#status { margin-top:10px; font-size: clamp(18px,5vw,28px); min-height:40px; }
+.success { color:#0f0; text-shadow:0 0 25px #0f0,0 0 45px red; }
+.failure { color:red; text-shadow:0 0 25px red; }
+
+.lights { position:fixed; top:0; left:0; width:100%; display:flex; justify-content:space-between; padding:5px 0; z-index:99; pointer-events:none; }
+.light { width:18px; height:26px; border-radius:50%; background:red; box-shadow:0 0 15px red,0 0 25px red; animation:flicker 1.3s infinite alternate; }
+@keyframes flicker { from {opacity:0.4} to {opacity:1} }
+
+.fog { position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle, rgba(255,0,0,0.05) 0%, rgba(0,0,0,1) 70%); pointer-events:none; z-index:0; }
+
+/* Boot screen */
+#bootScreen { white-space:pre-wrap; text-align:left; max-width:700px; margin:40px auto; font-size:clamp(12px,3vw,18px); color:#0f0; }
+.boot-red { color:red; text-shadow:0 0 10px red; }
+.boot-green { color:#0f0; text-shadow:0 0 10px #0f0; }
+
+/* Snow */
+.snowflake { position: fixed; top:-10px; color:#888; font-size:14px; opacity:0.7; user-select:none; pointer-events:none; animation:fall linear infinite; }
+@keyframes fall { 0% {transform:translateY(-10px);} 100% {transform:translateY(110vh);} }
+
+/* Terminal glitch */
+.glitch { text-shadow:0px 0px 4px #0f0,2px 0px 2px red,-2px 0px 2px blue; animation: glitchy 0.2s steps(2,end) alternate; }
+@keyframes glitchy { from{transform:translate(0,0);} to{transform:translate(1px,-1px);} }
+
+/* ----------------------------
+   FULLSCREEN LAUNCH OVERLAY
+-----------------------------*/
+#launchOverlay {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:red;
+    color:black;
+    font-size: clamp(32px, 8vw, 96px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    text-align:center;
+    flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    animation: shake 0.3s infinite alternate;
+}
+@keyframes shake {
+    0%{transform:translate(0px,0px);}
+    25%{transform:translate(3px,-2px);}
+    50%{transform:translate(-3px,2px);}
+    75%{transform:translate(2px,-3px);}
+    100%{transform:translate(-2px,3px);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="fog"></div>
+<div class="crt"></div>
+
+<div class="lights">
+<script>for(let i=0;i<20;i++){document.write('<div class="light"></div>');}</script>
+</div>
+
+<h1 id="title" style="opacity:0;">X.M.A.S</h1>
+<h2 id="subtitle" style="opacity:0;">(Extraterrestrial Munitions Activation Server)</h2>
+
+<pre id="bootScreen"></pre>
+
+<div id="timerLabel">Time until Tannen-Bomb detonation</div>
+<div id="timer">90:00:00</div>
+
+<div id="inputLabel">Please input your 25-digit deactivation key to disengage launch sequence</div>
+<div id="codeBoxes"></div>
+
+<div id="status"></div>
+
+<div id="launchOverlay">LAUNCH SEQUENCE INITIATED</div>
+
+<!-- Retro CRT hum -->
+<audio id="crtHum" autoplay loop>
+    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_9d9d7b16f5.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+/* -------------------------
+   BOOT SEQUENCE
+------------------------- */
+const bootLines = [
+"[SYS-CHK] Initializing X.M.A.S Command Kernel v13.12...",
+"[SYS-CHK] Loading extraterrestrial warhead protocols...",
+"[OK] Activating cosmic targeting grid...",
+"[WARNING] Sleigh propulsion warp coil overheating.",
+"[OK] Redirecting coolant...",
+"[FAIL] Reindeer neural uplink…                  <span class='boot-red'>ERR</span>",
+"[OK] Bypassing biological interface...",
+"[OK] Arming Tannen-Bomb primary core...",
+"[OK] Loading access terminal..."
+];
+let bootIndex=0;
+const bootScreen=document.getElementById("bootScreen");
+function typeBootLine(){if(bootIndex>=bootLines.length){finalizeBoot();return;}const delay=300+Math.random()*900;bootScreen.innerHTML+=bootLines[bootIndex]+"\n";bootIndex++;setTimeout(typeBootLine,delay);}
+function finalizeBoot(){bootScreen.innerHTML+="\n<span class='boot-green'>[ACCESS TERMINAL ONLINE]</span>\n";setTimeout(()=>{bootScreen.style.display="none";showMainUI();},1000);}
+function showMainUI(){document.getElementById("title").style.opacity=1;document.getElementById("subtitle").style.opacity=1;document.getElementById("timerLabel").style.opacity=1;document.getElementById("timer").style.opacity=1;document.getElementById("inputLabel").style.opacity=1;document.getElementById("codeBoxes").style.opacity=1;document.getElementById("status").style.opacity=1;enableInputs();}
+setTimeout(typeBootLine,700);
+
+/* -------------------------
+   MAIN LOGIC
+------------------------- */
+const correctCode="3wzmenw84a*w/$frnkn¢&myrh";
+let timerRunning=true,timeRemaining=90*60;
+const timerElement=document.getElementById("timer"),statusElement=document.getElementById("status");
+const codeBoxes=document.getElementById("codeBoxes");
+for(let i=0;i<25;i++){const box=document.createElement("input");box.className="charBox";box.maxLength=1;box.dataset.index=i;box.disabled=true;codeBoxes.appendChild(box);box.addEventListener("input",e=>{const idx=Number(e.target.dataset.index);const next=document.querySelector(`.charBox[data-index="${idx+1}"]`);if(next&&e.target.value)next.focus();checkCode();});box.addEventListener("keydown",e=>{if(e.key==="Backspace"&&!e.target.value){const idx=Number(e.target.dataset.index);const prev=document.querySelector(`.charBox[data-index="${idx-1}"]`);if(prev)prev.focus();}});}
+function enableInputs(){document.querySelectorAll(".charBox").forEach(b=>b.disabled=false);document.querySelector('.charBox[data-index="0"]').focus();}
+function getEnteredCode(){return[...document.querySelectorAll(".charBox")].map(b=>b.value).join("");}
+function checkCode(){const entered=getEnteredCode();if(entered.length===25&&entered===correctCode){grantAccess();}else if(entered.length===25){statusElement.innerHTML="<span class='failure'>INVALID CODE</span>";triggerGlitch(statusElement);}else{statusElement.innerHTML="";}}
+
+/* -------------------------
+   TIMER: HH:MM:SS
+------------------------- */
+function updateTimer(){
+    if(!timerRunning) return;
+
+    let hours=Math.floor(timeRemaining/3600);
+    let minutes=Math.floor((timeRemaining%3600)/60);
+    let seconds=timeRemaining%60;
+
+    timerElement.textContent=`${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+
+    if(timeRemaining<=0){timerExpired();return;}
+    timeRemaining--;
+}
+let timer=setInterval(updateTimer,1000);
+
+/* -------------------------
+   TIMER EXPIRATION
+------------------------- */
+function timerExpired(){
+    timerRunning=false;
+    timerElement.textContent="00:00:00";
+    timerElement.classList.add("flash");
+    timerElement.style.color="red";
+    statusElement.innerHTML="<span class='failure'>TANNEN-BOMB DETONATION IMMINENT</span>";
+    triggerGlitch(timerElement);
+    const overlay=document.getElementById("launchOverlay");
+    overlay.style.opacity=1;
+    overlay.style.pointerEvents="all";
+}
+
+/* -------------------------
+   GRANT ACCESS
+------------------------- */
+function grantAccess(){
+    timerRunning=false;
+    clearInterval(timer);
+    timerElement.classList.remove("flash");
+    timerElement.style.color="#0f0";
+    statusElement.innerHTML="<span class='success'>DEACTIVATION KEY ACCEPTED — LAUNCH SEQUENCE DISENGAGED</span>";
+}
+
+/* -------------------------
+   GLITCH EFFECT
+------------------------- */
+function triggerGlitch(el){el.classList.add("glitch");setTimeout(()=>{el.classList.remove("glitch");},200);}
+const glitchTargets=["title","subtitle","timer","timerLabel","inputLabel"];
+setInterval(()=>{const id=glitchTargets[Math.floor(Math.random()*glitchTargets.length)];const el=document.getElementById(id);if(!el)return;triggerGlitch(el);},1800+Math.random()*2000);
+
+/* -------------------------
+   SNOW
+------------------------- */
+function createSnowflake(){const flake=document.createElement("div");flake.textContent="*";flake.className="snowflake";flake.style.left=Math.random()*100+"vw";flake.style.animationDuration=5+Math.random()*5+"s";document.body.appendChild(flake);setTimeout(()=>flake.remove(),12000);}
+setInterval(createSnowflake,180);
+</script>
+
+</body>
+</html>
