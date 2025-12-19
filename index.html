@@ -146,9 +146,9 @@ h2 { font-size: clamp(12px,3vw,20px); margin-top:0; margin-bottom:20px; color:#0
 <pre id="bootScreen"></pre>
 
 <div id="timerLabel">Time until Tannen-Bomb detonation</div>
-<div id="timer">90:00:00</div>
+<div id="timer">60:00:00</div>
 
-<div id="inputLabel">Please input your 25-digit deactivation key to disengage launch sequence</div>
+<div id="inputLabel">Please input your 12-digit deactivation key to disengage launch sequence</div>
 <div id="codeBoxes"></div>
 
 <div id="status"></div>
@@ -185,14 +185,14 @@ setTimeout(typeBootLine,700);
 /* -------------------------
    MAIN LOGIC
 ------------------------- */
-const correctCode="3wzmenw84a*w/$frnkn¢&myrh";
-let timerRunning=true,timeRemaining=90*60;
+const correctCode="3w1zm3nw84a*";
+let timerRunning=true,timeRemaining=60*60;
 const timerElement=document.getElementById("timer"),statusElement=document.getElementById("status");
 const codeBoxes=document.getElementById("codeBoxes");
-for(let i=0;i<25;i++){const box=document.createElement("input");box.className="charBox";box.maxLength=1;box.dataset.index=i;box.disabled=true;codeBoxes.appendChild(box);box.addEventListener("input",e=>{const idx=Number(e.target.dataset.index);const next=document.querySelector(`.charBox[data-index="${idx+1}"]`);if(next&&e.target.value)next.focus();checkCode();});box.addEventListener("keydown",e=>{if(e.key==="Backspace"&&!e.target.value){const idx=Number(e.target.dataset.index);const prev=document.querySelector(`.charBox[data-index="${idx-1}"]`);if(prev)prev.focus();}});}
+for(let i=0;i<12;i++){const box=document.createElement("input");box.className="charBox";box.maxLength=1;box.dataset.index=i;box.disabled=true;codeBoxes.appendChild(box);box.addEventListener("input",e=>{const idx=Number(e.target.dataset.index);const next=document.querySelector(`.charBox[data-index="${idx+1}"]`);if(next&&e.target.value)next.focus();checkCode();});box.addEventListener("keydown",e=>{if(e.key==="Backspace"&&!e.target.value){const idx=Number(e.target.dataset.index);const prev=document.querySelector(`.charBox[data-index="${idx-1}"]`);if(prev)prev.focus();}});}
 function enableInputs(){document.querySelectorAll(".charBox").forEach(b=>b.disabled=false);document.querySelector('.charBox[data-index="0"]').focus();}
 function getEnteredCode(){return[...document.querySelectorAll(".charBox")].map(b=>b.value).join("");}
-function checkCode(){const entered=getEnteredCode();if(entered.length===25&&entered===correctCode){grantAccess();}else if(entered.length===25){statusElement.innerHTML="<span class='failure'>INVALID CODE</span>";triggerGlitch(statusElement);}else{statusElement.innerHTML="";}}
+function checkCode(){const entered=getEnteredCode();if(entered.length===12&&entered===correctCode){grantAccess();}else if(entered.length===12){statusElement.innerHTML="<span class='failure'>INVALID CODE</span>";triggerGlitch(statusElement);}else{statusElement.innerHTML="";}}
 
 /* -------------------------
    TIMER: HH:MM:SS
